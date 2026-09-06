@@ -23,15 +23,20 @@ frame), "fail" means something is actually broken locally.
 """
 import json
 import os
+import re
 import subprocess
 import sys
 
 from PIL import Image, ImageChops
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# Runtime calls that still go to Tilda but fail gracefully (documented in README):
+# phone-mask country lookup and the cart's active-discounts query.
+ACCEPTED_TILDA = ("geo.tildaapi.one", "store.tildaapi.one", "geo.tildaapi.com", "store.tildaapi.com")
 ALLOWED_EXTERNAL = ("fonts.googleapis.com", "fonts.gstatic.com", "mc.yandex.ru", "mc.yandex.com",
                     "player.vimeo.com", "i.vimeocdn.com", "f.vimeocdn.com", "vimeo.com",
-                    "unpkg.com", "cdn.jsdelivr.net", "www.instagram.com", "t.me", "wa.me")
+                    "unpkg.com", "cdn.jsdelivr.net", "www.instagram.com", "t.me", "wa.me",
+                    "www.youtube.com", "www.youtube-nocookie.com", "i.ytimg.com", "youtube.com")
 
 
 def arg(name, default):
@@ -98,15 +103,24 @@ def main():
         problems.append(f"height differs {a['height']} vs {b['height']}")
     if b["brokenImgs"]:
         problems.append(f"broken images locally: {b['brokenImgs'][:5]}")
-    if b["consoleErrors"]:
-        problems.append(f"console errors locally: {b['consoleErrors'][:5]}")
+    def norm(e):
+        return re.sub(r"https?://[^\s)]+", "<url>", e)
+    live_errs = {norm(e) for e in a["consoleErrors"]}
+    new_errs = [e for e in b["consoleErrors"] if norm(e) not in live_errs]
+    if new_errs:
+        problems.append(f"console errors locally: {new_errs[:5]}")
+    elif b["consoleErrors"]:
+        problems.append(f"info: same console errors as live: {b['consoleErrors'][:2]}")
     if b["failedRequests"]:
         problems.append(f"failed requests locally: {b['failedRequests'][:5]}")
     if b["badStatus"]:
         problems.append(f"4xx/5xx locally: {b['badStatus'][:5]}")
-    tilda_hosts = [h for h in b["externalHosts"] if "tilda" in h]
+    tilda_hosts = [h for h in b["externalHosts"] if "tilda" in h and not h.startswith(ACCEPTED_TILDA)]
     if tilda_hosts:
         problems.append(f"still contacts Tilda: {tilda_hosts}")
+    accepted = [h for h in b["externalHosts"] if h.startswith(ACCEPTED_TILDA)]
+    if accepted:
+        problems.append(f"info: accepted Tilda runtime calls {accepted}")
     unknown_hosts = [h for h in b["externalHosts"] if "tilda" not in h and not h.startswith(" ")
                      and not any(h.startswith(x) for x in ALLOWED_EXTERNAL)]
     if unknown_hosts:
@@ -117,7 +131,8 @@ def main():
         problems.append(f"pixel diff share {share}")
 
     hard = [p for p in problems if p.startswith(("broken", "console", "failed", "4xx", "still contacts", "block list"))]
-    verdict = "fail" if hard else ("check" if problems else "ok")
+    soft = [p for p in problems if not p.startswith("info:") and p not in hard]
+    verdict = "fail" if hard else ("check" if soft else "ok")
     print(json.dumps({
         "path": path, "mobile": mobile, "verdict": verdict, "problems": problems,
         "recs_equal": recs_equal, "height_live": a["height"], "height_local": b["height"],

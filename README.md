@@ -35,8 +35,14 @@ crawl-report.json  page list, asset count, dead links found on the live site
 3. `tools/optimize_images.py` — originals over 2000px were scaled down and
    large JPEGs re-encoded (285 MB -> 186 MB). Tilda never served the originals
    either; its lazyloader requested resized variants.
-4. Tilda's statistics beacon (`tilda-stat-1.0.min.js`) is replaced by an
-   empty stub; the cart's icon URLs were pointed at local copies.
+4. Scripts that fetched more code or images from Tilda at runtime were
+   pointed at local copies: the cart's icon SVGs and its lazily loaded
+   discounts/delivery/fullscreen files (`t_catalog__getStaticHost` now returns
+   `/assets/static`), the phone-mask flag sprite, and `tilda-forms-payments`.
+   Tilda's statistics beacon (`tilda-stat-1.0.min.js`) is an empty stub.
+   `tilda-menusub` is loaded `defer` instead of `async` because its top-level
+   code needs `t_throttle` from `tilda-scripts` (a race Tilda's CDN usually
+   wins; a fast host loses it and the submenu script dies).
 5. `tools/check_site.py site` — every local reference resolves to a file.
 6. `tools/verify_all.py --all` — for every page, live Tilda vs local mirror in
    headless Chrome: same block list, same height, no console errors, no failed
@@ -52,7 +58,20 @@ crawl-report.json  page list, asset count, dead links found on the live site
 * **"Записаться" on the service cards** opens Tilda's cart, whose checkout also
   posts to Tilda. Same caveat; easiest fix is pointing those buttons at the
   /anketa form or a Telegram link.
+* Two harmless runtime calls still go to Tilda and fail gracefully if Tilda
+  disappears: the phone mask asks `geo.tildaapi.one` for the visitor's
+  country (falls back to the form's default country) and the cart asks
+  `store.tildaapi.one` for active discounts (logs an error, continues).
 * Yandex Metrika counter keeps working from any domain.
+
+## Leftover template pages
+
+`page21808464.html` ("Copy of Bora Headquarters"), `page21808644.html`
+("Copy of House Z") and `page65586091.html` ("Flowers", whose catalog block
+errors on Tilda too) look like Tilda template demo pages that were left
+published and are in the sitemap (`page8023976.html` is the real Diputacio
+project page and stays). They were mirrored as-is; delete them from `site/` and `sitemap.xml`
+if Anna confirms they are junk.
 
 ## Dead links that were already dead on Tilda
 

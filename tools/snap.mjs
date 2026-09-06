@@ -90,13 +90,14 @@ const consoleErrors = [];
 const failed = [];
 const badStatus = [];
 const hosts = new Map();
+const externalUrls = [];
 const reqUrl = new Map();
 on('Runtime.exceptionThrown', (p) => consoleErrors.push('exception: ' + (p.exceptionDetails.exception?.description || p.exceptionDetails.text || '').slice(0, 300)));
 on('Runtime.consoleAPICalled', (p) => { if (p.type === 'error') consoleErrors.push('console.error: ' + p.args.map((a) => a.value || a.description || '').join(' ').slice(0, 300)); });
 on('Log.entryAdded', (p) => { if (p.entry.level === 'error') consoleErrors.push(`log: ${p.entry.text.slice(0, 200)} ${p.entry.url || ''}`); });
 on('Network.requestWillBeSent', (p) => {
   reqUrl.set(p.requestId, p.request.url);
-  try { const h = new URL(p.request.url).host; hosts.set(h, (hosts.get(h) || 0) + 1); } catch { /* ignore */ }
+  try { const h = new URL(p.request.url).host; hosts.set(h, (hosts.get(h) || 0) + 1); if (h !== new URL(url).host && externalUrls.length < 60) externalUrls.push(p.request.url.slice(0, 160)); } catch { /* ignore */ }
 });
 on('Network.loadingFailed', (p) => { if (!p.canceled) failed.push(`${reqUrl.get(p.requestId) || p.requestId} (${p.errorText})`); });
 on('Network.responseReceived', (p) => { if (p.response.status >= 400) badStatus.push(`${p.response.status} ${p.response.url}`); });
@@ -172,7 +173,7 @@ const pageHost = new URL(url).host;
 const external = [...hosts.entries()].filter(([h]) => h !== pageHost).map(([h, n]) => `${h} (${n})`);
 const out = {
   url, width, mobile, ...metrics, consoleErrors, failedRequests: failed, badStatus,
-  externalHosts: external, requestCount: [...hosts.values()].reduce((a, b) => a + b, 0),
+  externalHosts: external, externalUrls, requestCount: [...hosts.values()].reduce((a, b) => a + b, 0),
   slices, fullHeight: fullH, truncated, textFile: outPrefix + '.txt',
 };
 fs.writeFileSync(outPrefix + '.txt', text);
