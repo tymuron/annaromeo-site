@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Point the mirror at its public origin: rewrites <link rel="canonical"> and
-<meta property="og:url"> on every page, and the Sitemap line in robots.txt and
-every <loc> in sitemap.xml.
+Point the mirror at its public origin: rewrites <link rel="canonical">,
+<meta property="og:url"> and <meta property="og:image"> on every page, and the
+Sitemap line in robots.txt plus every <loc> in sitemap.xml. og:image has to
+stay an absolute URL or social/link previews show nothing.
 
 Usage: python3 tools/set_origin.py site https://annaromeo.design
 """
@@ -30,6 +31,9 @@ def main():
             doc = open(p, encoding="utf-8").read()
             new = re.sub(r'(<link rel="canonical" href=")[^"]*(")', r"\g<1>" + canon + r"\g<2>", doc)
             new = re.sub(r'(<meta property="og:url" content=")[^"]*(")', r"\g<1>" + canon + r"\g<2>", new)
+            # og:image must stay absolute or link previews break
+            new = re.sub(r'(<meta property="og:image" content=")(?:https?://[^"/]+)?(/[^"]*)(")',
+                         lambda m: m.group(1) + origin + m.group(2) + m.group(3), new)
             if new != doc:
                 open(p, "w", encoding="utf-8").write(new)
                 n += 1

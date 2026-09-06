@@ -54,20 +54,32 @@ crawl-report.json  page list, asset count, dead links found on the live site
 7. `tools/verify_all.py --all` — for every page, live Tilda vs local mirror in
    headless Chrome: same block list, same height, no console errors, no failed
    requests, no Tilda hosts contacted, pixel diff of the full-page screenshot.
-   Result: all 44 pages match, desktop and mobile. The one standing flag is
-   `/main`, where the pixel diff is the Vimeo background video caught on a
-   different frame in the two captures; everything else there is identical.
+   Result: 43 of 44 pages match, desktop and mobile. The pixel differences that
+   remain are all animations caught mid-cycle in the two captures, verified by
+   eye: the Vimeo background video on `/main` and the auto-advancing galleries
+   on `page21808464.html` and `page21808644.html`. The 44th is
+   `page65586091.html` (see "Leftover template pages").
+   The checker also matches accepted Tilda calls on the full URL and the host,
+   so an analytics beacon carrying "tilda" in a query parameter is not
+   mistaken for a Tilda dependency.
    Two known non-differences the checker ignores: Tilda's invisible skip-link
    label (its language races on `window.browserLang`, so it flips both ways
    between runs) and console errors that the live site produces too.
 
 ## What still depends on Tilda (decide before cancelling the Tilda plan)
 
-* **Forms** (`data-formactiontype="2"` on the home, /uslugi_vastu, /anketa and
-  the service pages) post to `forms.tildacdn.com`, i.e. into the Tilda
-  project's lead inbox and its connected services. They keep working only
-  while the Tilda project exists. Replace with an own endpoint (Telegram bot,
-  Formspree, a tiny Render web service) before the Tilda subscription ends.
+* **Forms** post into the Tilda project's lead inbox (XHR to
+  `forms.tildaapi.one`, with `forms2.tildacdn.com` as a fallback), so they keep
+  working only while the Tilda project exists. Replace with an own endpoint
+  (Telegram bot, Formspree, a tiny Render web service) before the subscription
+  ends. The full list, which is wider than it looks:
+  - static `<form data-formactiontype="2">`: `/` (3), `/uslugi_vastu` (3),
+    `/offer` (3, both popups redirect to a Telegram post on success), `/main`
+    (3), `/anketa` (1), the five `/main/tproduct/*` pages, `/fs`,
+    `/page79481866.html`;
+  - a contact form that only exists after JS runs, so no grep finds it, on
+    `404.html`, `/error-page` and `/page68596975.html` — and Render serves
+    `404.html` for every unmatched path, so this one is live on the whole site.
 * **"Записаться" on the service cards** opens Tilda's cart, whose checkout also
   posts to Tilda. Same caveat; easiest fix is pointing those buttons at the
   /anketa form or a Telegram link.
@@ -75,7 +87,12 @@ crawl-report.json  page list, asset count, dead links found on the live site
   disappears: the phone mask asks `geo.tildaapi.one` for the visitor's country
   (falls back to the form's default country) and the cart asks
   `store.tildaapi.one` for active discounts (logs an error, continues). Both
-  are listed as accepted in `tools/verify_page.py`.
+  are listed as accepted in `tools/verify_page.py`, which matches them on the
+  full URL rather than the hostname so nothing else can hide behind them.
+* The cart's translations for visitors whose browser is not English or Russian
+  (Spanish, in Anna's case) are served from `/assets/static`; eleven language
+  dictionaries were downloaded. Verified with a Spanish-locale browser: the
+  mirror loads its own copy where the live site fetches Tilda's.
 * Tilda hostnames still appear as strings inside the library JS, but every one
   is an unreachable path on this site: error fallbacks, and features no page
   uses (file uploads, delivery services, saved payment fields). The audit
@@ -85,10 +102,17 @@ crawl-report.json  page list, asset count, dead links found on the live site
 ## Leftover template pages
 
 `page21808464.html` ("Copy of Bora Headquarters"), `page21808644.html`
-("Copy of House Z") and `page65586091.html` ("Flowers", whose catalog block
-errors on Tilda too) look like Tilda template demo pages that were left
-published and are in the sitemap (`page8023976.html` is the real Diputacio
-project page and stays). They were mirrored as-is; delete them from `site/` and `sitemap.xml`
+("Copy of House Z") and `page65586091.html` ("Flowers") are Tilda template demo
+pages that were left published, and all three are in `sitemap.xml`
+(`page8023976.html` is the real Diputacio project page and stays).
+
+**`page65586091.html` is the one page that still renders from Tilda at
+runtime**: its catalog block queries `store.tildaapi.one/api/getproductslist`
+and `getfilters` for a product list that is not Anna's. It already fails on
+Tilda itself (the API answers with an error, so the block stays empty there
+too). Deleting the three pages and their `sitemap.xml` entries removes the
+last runtime call and three junk pages from search results, but they are
+Anna's content, so that is her call. They were mirrored as-is; delete them from `site/` and `sitemap.xml`
 if Anna confirms they are junk.
 
 ## Dead links that were already dead on Tilda

@@ -30,9 +30,16 @@ import sys
 from PIL import Image, ImageChops
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# Runtime calls that still go to Tilda but fail gracefully (documented in README):
-# phone-mask country lookup and the cart's active-discounts query.
-ACCEPTED_TILDA = ("geo.tildaapi.one", "store.tildaapi.one", "geo.tildaapi.com", "store.tildaapi.com")
+# The only Tilda calls the mirror is allowed to make, matched on the full URL
+# rather than the host, so that a page which genuinely renders its content from
+# Tilda's store API cannot hide behind an accepted hostname. Both fail
+# gracefully if Tilda disappears (documented in README).
+ACCEPTED_TILDA_URLS = (
+    "https://geo.tildaapi.one/geo/country/",       # phone mask: visitor country
+    "https://geo.tildaapi.com/geo/country/",
+    "https://store.tildaapi.one/api/discounts/v1/getactive/",   # cart discounts
+    "https://store.tildaapi.com/api/discounts/v1/getactive/",
+)
 ALLOWED_EXTERNAL = ("fonts.googleapis.com", "fonts.gstatic.com", "mc.yandex.ru", "mc.yandex.com",
                     "player.vimeo.com", "i.vimeocdn.com", "f.vimeocdn.com", "vimeo.com",
                     "unpkg.com", "cdn.jsdelivr.net", "www.instagram.com", "t.me", "wa.me",
@@ -115,12 +122,21 @@ def main():
         problems.append(f"failed requests locally: {b['failedRequests'][:5]}")
     if b["badStatus"]:
         problems.append(f"4xx/5xx locally: {b['badStatus'][:5]}")
-    tilda_hosts = [h for h in b["externalHosts"] if "tilda" in h and not h.startswith(ACCEPTED_TILDA)]
-    if tilda_hosts:
-        problems.append(f"still contacts Tilda: {tilda_hosts}")
-    accepted = [h for h in b["externalHosts"] if h.startswith(ACCEPTED_TILDA)]
+    def host_of(u):
+        m = re.match(r"https?://([^/]+)", u)
+        return m.group(1) if m else ""
+    # match on the HOST, not the whole URL: an analytics beacon can carry the
+    # page path (which contains "tilda") inside a query parameter.
+    tilda_urls = [u for u in b.get("externalUrls", []) if "tilda" in host_of(u)]
+    bad = [u for u in tilda_urls if not u.startswith(ACCEPTED_TILDA_URLS)]
+    accepted = [u for u in tilda_urls if u.startswith(ACCEPTED_TILDA_URLS)]
+    if bad:
+        problems.append(f"still contacts Tilda: {sorted(set(bad))[:5]}")
+    elif [h for h in b["externalHosts"] if "tilda" in h] and not tilda_urls:
+        # externalUrls is capped at 60 entries; fall back to the host list
+        problems.append(f"still contacts Tilda (hosts): {[h for h in b['externalHosts'] if 'tilda' in h]}")
     if accepted:
-        problems.append(f"info: accepted Tilda runtime calls {accepted}")
+        problems.append(f"info: accepted Tilda runtime calls {sorted({u.split('?')[0] for u in accepted})}")
     unknown_hosts = [h for h in b["externalHosts"] if "tilda" not in h and not h.startswith(" ")
                      and not any(h.startswith(x) for x in ALLOWED_EXTERNAL)]
     if unknown_hosts:
