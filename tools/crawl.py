@@ -17,6 +17,10 @@ What it does
   6. Writes a JSON report of pages, assets, dead links and any CDN references
      that could not be localised.
 
+Known limitation: an asset URL containing a literal space or parenthesis is
+truncated at that character (Tilda sanitises uploaded filenames, so none occur
+on this site; check_site.py would report the resulting miss).
+
 Usage:  python3 tools/crawl.py <out_dir> [--origin https://example.com]
 """
 import html
@@ -62,12 +66,14 @@ ASSET_HOST_LABEL = {
 }
 
 ASSET_RE = re.compile(
-    r"(?:https?:)?//([a-z0-9-]+\.tildacdn\.(?:net|com|one))(/[^\s\"'<>()\\&]+)"
+    r"(?:https?:)?//([a-z0-9-]+\.tildacdn\.[a-z]{2,6})(/[^\s\"'<>()\\]+)"
 )
 ESC_ASSET_RE = re.compile(
-    r"(?:https?:)?\\/\\/([a-z0-9-]+\.tildacdn\.(?:net|com|one))((?:\\/[^\s\"'<>()&\\]+)+)"
+    r"(?:https?:)?\\/\\/([a-z0-9-]+\.tildacdn\.[a-z]{2,6})((?:\\/[^\s\"'<>()\\]+)+)"
 )
-CSS_URL_RE = re.compile(r"url\(\s*['\"]?((?:https?:)?//[a-z0-9-]+\.tildacdn\.(?:net|com|one)/[^)'\"\s]+)['\"]?\s*\)")
+CSS_URL_RE = re.compile(r"url\(\s*['\"]?((?:https?:)?//[a-z0-9-]+\.tildacdn\.[a-z]{2,6}/[^)'\"]+?)['\"]?\s*\)")
+# @import "https://static.tildacdn.net/..." (string form, no url())
+CSS_IMPORT_RE = re.compile(r"@import\s+['\"]((?:https?:)?//[a-z0-9-]+\.tildacdn\.[a-z]{2,6}/[^'\"]+)['\"]")
 
 sess = requests.Session()
 sess.headers["User-Agent"] = UA
@@ -91,7 +97,7 @@ def fetch(url, binary=False, tries=4):
             last = repr(e)
         time.sleep(1.5 * (i + 1))
     log(f"  !! failed {url}: {last}")
-    return None
+    raise RuntimeError(f"fetch failed after {tries} tries: {url} ({last})")
 
 
 def page_path_to_file(path):
@@ -165,6 +171,16 @@ class Mirror:
             return f"url({local})" if local else m.group(0)
 
         new = CSS_URL_RE.sub(repl, css)
+
+        def repl_import(m):
+            url = m.group(1)
+            if url.startswith("//"):
+                url = "https:" + url
+            u = urllib.parse.urlsplit(url)
+            local = self.download_asset(u.netloc, u.path + (("?" + u.query) if u.query else ""))
+            return m.group(0).replace(m.group(1), local) if local else m.group(0)
+
+        new = CSS_IMPORT_RE.sub(repl_import, new)
         if new != css:
             with open(disk, "w", encoding="utf-8") as f:
                 f.write(new)
@@ -179,13 +195,24 @@ class Mirror:
 
     def localise_text(self, txt):
         def repl(m):
-            host, path = m.group(1), m.group(2)
+            host, raw = m.group(1), m.group(2)
             if host not in ASSET_HOST_LABEL:
                 return m.group(0)
-            local = self.download_asset(host, html.unescape(path))
+            # A local file has no query string, so anything from "?" on is
+            # dropped. A bare "&" with no "?" before it is not part of the URL
+            # (an HTML entity such as &amp;quot; ending the attribute) - cut
+            # there and put the tail back into the document unchanged.
+            tail = ""
+            amp = raw.find("&")
+            q = raw.find("?")
+            if q >= 0:
+                raw = raw[:q] if amp < 0 or amp > q else raw[:q]
+            elif amp >= 0:
+                raw, tail = raw[:amp], raw[amp:]
+            local = self.download_asset(host, html.unescape(raw))
             if not local:
                 return m.group(0)
-            return urllib.parse.quote(local, safe="/:@+,;=-._~!$'*")
+            return urllib.parse.quote(local, safe="/:@+,;=-._~!$'*") + tail
 
         def repl_esc(m):
             host, path = m.group(1), m.group(2).replace("\\/", "/")
@@ -212,7 +239,9 @@ class Mirror:
         # https://annaromeo.design/x , https://www... , http(s)://annaromeo.tilda.ws/x
         host_re = r"https?://(?:www\.)?(?:annaromeo\.design|annaromeo\.tilda\.ws)"
         doc = re.sub(host_re + r"(?=/)", "", doc)
-        doc = re.sub(host_re + r"(?=[\"'\s<>)])", "/", doc)
+        doc = re.sub(host_re + r"(?=[\"'\s<>)?#])", "/", doc)
+        # JSON-escaped site links: "https:\/\/annaromeo.design\/x"
+        doc = re.sub(r"https?:\\/\\/(?:www\.)?(?:annaromeo\.design|annaromeo\.tilda\.ws)(?=\\/)", "", doc)
         return doc
 
     def strip_plumbing(self, doc):
@@ -250,7 +279,13 @@ class Mirror:
 
     def process_page(self, path, from_page):
         log(f"page {path}")
-        raw = fetch(SRC + path)
+        try:
+            raw = fetch(SRC + path)
+        except RuntimeError as e:
+            # a transient failure is not a dead link - surface it separately
+            self.failed_assets.append(str(e))
+            log(f"  -> FETCH ERROR {e}")
+            return
         if raw is None:
             self.dead_links.setdefault(path, []).append(from_page)
             log(f"  -> 404 (linked from {from_page})")

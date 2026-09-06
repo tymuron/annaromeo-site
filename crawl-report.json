@@ -76,26 +76,6 @@
   },
   "failed_assets": [],
   "leftover_cdn_refs": {
-    "main/tproduct/1151175336-420594891772-podbor-novoi-nedvizhimosti-po-vastu/index.html": [
-      "static.tildacdn.one/tild6135-6639-4666-a139-326165333830/8L7A6838.jpeg",
-      "static.tildacdn.one\\/tild6135-6639-4666-a139-326165333830\\/8L7A6838.jpeg"
-    ],
-    "main/tproduct/1151175336-387501560802-vastu-dizain-kontseptsiya-interera/index.html": [
-      "static.tildacdn.one/tild3132-6630-4561-b462-373061306663/-_2_2_resized_1.jpg",
-      "static.tildacdn.one\\/tild3132-6630-4561-b462-373061306663\\/-_2_2_resized_1.jpg"
-    ],
-    "main/tproduct/1151175336-676208897862-vastu-diagnostika/index.html": [
-      "static.tildacdn.one/tild6331-3439-4639-b066-663233613039/-_2_3_resized_1.jpg",
-      "static.tildacdn.one\\/tild6331-3439-4639-b066-663233613039\\/-_2_3_resized_1.jpg"
-    ],
-    "main/tproduct/1151175336-991692931582-konsultatsiya-po-vastu-dizainu-dlya-diza/index.html": [
-      "static.tildacdn.one/tild3431-6539-4162-b934-636233656161/IMG_1633_1_1.jpg",
-      "static.tildacdn.one\\/tild3431-6539-4162-b934-636233656161\\/IMG_1633_1_1.jpg"
-    ],
-    "main/tproduct/1151175336-966293073022-konsultatsiya-vastu-dlya-biznesa/index.html": [
-      "static.tildacdn.one/tild3665-6262-4364-b261-313962346339/8L7A8510.jpeg",
-      "static.tildacdn.one\\/tild3665-6262-4364-b261-313962346339\\/8L7A8510.jpeg"
-    ],
     "assets/static/js/tilda-upwidget-1.1.min.js": [
       "upwidget.tildacdn.com/upload/",
       "upwidget.tildacdn.com/upload/?get_mime="
@@ -103,8 +83,17 @@
     "assets/static/js/tilda-zero-forms-1.0.min.js": [
       "forms.tildacdn.com/procces/"
     ],
+    "assets/static/js/tilda-catalog-tabs-1.0.min.js": [
+      ".tildacdn.com"
+    ],
     "assets/static/js/tilda-catalog-1.1.min.js": [
       ".tildacdn.com"
+    ],
+    "assets/static/js/tilda-delivery-1.0.min.js": [
+      ".tildacdn.com",
+      "2.tildacdn.com",
+      "delivery.tildacdn.com",
+      "static3.tildacdn.com"
     ],
     "assets/static/js/tilda-forms-1.0.min.js": [
       "forms.tildacdn.com",
@@ -113,17 +102,23 @@
     "assets/static/js/tilda-scripts-3.0.min.js": [
       "static.tildacdn.com"
     ],
+    "assets/static/js/tilda-cart-restorefields-1.0.min.js": [
+      "store-tools.tildacdn.com/api/v1/getkeyforsavedcontacts/"
+    ],
     "assets/static/js/tilda-cart-1.1.min.js": [
       "delivery.tildacdn.com",
       "forms.tildacdn.com/api/v1/getlostbasket/",
       "static3.tildacdn.com"
     ],
-    "assets/static/js/tilda-stat-1.0.min.js": [
-      "ws.tildacdn.com/project"
-    ],
     "assets/static/js/tilda-lazyload-1.0.min.js": [
       ".tildacdn.com",
       "static3.tildacdn.com/"
+    ],
+    "assets/static/js/tilda-errors-1.0.min.js": [
+      "sysstat.tildacdn.com/api/ajax/error/",
+      "sysstat.tildacdn.com/api/js/error/",
+      "sysstat.tildacdn.com/api/net/error/"
     ]
-  }
+  },
+  "note": "Regenerated after the runtime-asset localisation pass. Remaining hits are Tilda hostnames inside library JS that are unreachable code paths on this site (error fallbacks, features no page uses) plus the two accepted runtime calls geo.tildaapi/store.tildaapi documented in README."
 }

@@ -125,8 +125,17 @@ def main():
                      and not any(h.startswith(x) for x in ALLOWED_EXTERNAL)]
     if unknown_hosts:
         problems.append(f"unexpected external hosts: {unknown_hosts}")
-    if a["textHash"] != b["textHash"]:
-        problems.append(f"visible text differs (len {a['textLen']} vs {b['textLen']})")
+    # Tilda's screen-reader skip link (opacity:0) picks its language from a
+    # race between <html lang> and window.browserLang, so it flips in both
+    # directions between runs. Ignore it when comparing visible text.
+    def strip_skiplink(t):
+        for phrase in ("To main content", "К основному контенту"):
+            t = t.replace(phrase, "")
+        return t.strip()
+    live_txt = strip_skiplink(open(a["textFile"], encoding="utf-8").read())
+    local_txt = strip_skiplink(open(b["textFile"], encoding="utf-8").read())
+    if live_txt != local_txt:
+        problems.append(f"visible text differs (len {len(live_txt)} vs {len(local_txt)})")
     if share >= 0.03:
         problems.append(f"pixel diff share {share}")
 

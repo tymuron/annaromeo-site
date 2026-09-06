@@ -16,6 +16,10 @@ import sys
 import urllib.parse
 
 ATTR_RE = re.compile(r'\b(?:src|href|data-original|data-bg|data-img|data-poster|data-content-cover-bg|data-lazy-src|data-imgsrc|poster)=["\']([^"\']+)["\']', re.I)
+# runtime loads and JSON payloads inside inline <script>, plus <meta content>
+INLINE_PATH_RE = re.compile(r'["\'](/assets/[^"\'\\\s]+)["\']')
+ESC_PATH_RE = re.compile(r'\\/assets(?:\\/[^"\\\s]+)+')
+META_RE = re.compile(r'<meta[^>]+content=["\'](/assets/[^"\']+)["\']', re.I)
 SRCSET_RE = re.compile(r'\bsrcset=["\']([^"\']+)["\']', re.I)
 STYLE_URL_RE = re.compile(r"url\(\s*['\"]?([^)'\"]+)['\"]?\s*\)")
 CDN_RE = re.compile(r"[a-z0-9.-]*tildacdn\.[a-z]+[^\s\"'<>()]{0,100}")
@@ -63,6 +67,9 @@ def main():
                         refs.add(u)
             for u in STYLE_URL_RE.findall(doc):
                 refs.add(u)
+            refs.update(INLINE_PATH_RE.findall(doc))
+            refs.update(META_RE.findall(doc))
+            refs.update(m.replace("\\/", "/") for m in ESC_PATH_RE.findall(doc))
             missing = []
             for r in sorted(refs):
                 if EXT_SKIP.search(r):

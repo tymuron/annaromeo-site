@@ -1,10 +1,12 @@
 # annaromeo.design — static mirror, off Tilda
 
 The site Anna built on Tilda (project 1768115, published at `annaromeo.tilda.ws`)
-frozen into plain HTML/CSS/JS/images that any static host can serve. Nothing on
-these pages is fetched from Tilda at runtime any more; the only third parties
-left are Google Fonts, Yandex Metrika, Vimeo (one embedded video on /main) and
-two small JS libs from unpkg/jsdelivr that Anna's custom code on /main used.
+frozen into plain HTML/CSS/JS/images that any static host can serve. No page
+loads code, styles or images from Tilda any more. Two small JSON calls still
+go to Tilda on page load and degrade silently if it disappears (see "What
+still depends on Tilda"). The other third parties are Google Fonts, Yandex
+Metrika, Vimeo (the background video on /main) and two JS libs from
+unpkg/jsdelivr that Anna's custom code on /main uses.
 
 ```
 site/          the deployable site (Render publishes this folder)
@@ -27,15 +29,18 @@ crawl-report.json  page list, asset count, dead links found on the live site
    JSON-escaped inline data), rewrote all references to `/assets/...`, rewrote
    `annaromeo.design` links to root-relative paths, dropped Tilda's CDN
    fallback loader and dns-prefetch hints, wrote robots.txt + sitemap.xml.
-2. `tools/bake_store.py` — the services catalog on `/main` was rendered by
+2. `tools/crawl.py site --localise-file <page>` — re-runs step 1's rewriting on
+   a single page; used on the five service pages, whose product data is inline
+   JSON with `https:\/\/`-escaped image URLs.
+3. `tools/bake_store.py` — the services catalog on `/main` was rendered by
    Tilda's catalog JS from Tilda's store API. The markup that JS produced in a
    real browser was saved (`tools/rendered/store-main.html`) and baked into the
    page; the `t_store_init` call was removed. The five service pages already
    carried their product JSON inline, so they work as-is.
-3. `tools/optimize_images.py` — originals over 2000px were scaled down and
+4. `tools/optimize_images.py` — originals over 2000px were scaled down and
    large JPEGs re-encoded (285 MB -> 186 MB). Tilda never served the originals
    either; its lazyloader requested resized variants.
-4. Scripts that fetched more code or images from Tilda at runtime were
+5. Scripts that fetched more code or images from Tilda at runtime were
    pointed at local copies: the cart's icon SVGs and its lazily loaded
    discounts/delivery/fullscreen files (`t_catalog__getStaticHost` now returns
    `/assets/static`), the phone-mask flag sprite, and `tilda-forms-payments`.
@@ -43,10 +48,18 @@ crawl-report.json  page list, asset count, dead links found on the live site
    `tilda-menusub` is loaded `defer` instead of `async` because its top-level
    code needs `t_throttle` from `tilda-scripts` (a race Tilda's CDN usually
    wins; a fast host loses it and the submenu script dies).
-5. `tools/check_site.py site` — every local reference resolves to a file.
-6. `tools/verify_all.py --all` — for every page, live Tilda vs local mirror in
+6. `tools/check_site.py site` — every local reference resolves to a file
+   (2996 references across 44 pages, including inline-script and JSON-escaped
+   paths); the only unresolved links are the ones already dead on Tilda.
+7. `tools/verify_all.py --all` — for every page, live Tilda vs local mirror in
    headless Chrome: same block list, same height, no console errors, no failed
    requests, no Tilda hosts contacted, pixel diff of the full-page screenshot.
+   Result: all 44 pages match, desktop and mobile. The one standing flag is
+   `/main`, where the pixel diff is the Vimeo background video caught on a
+   different frame in the two captures; everything else there is identical.
+   Two known non-differences the checker ignores: Tilda's invisible skip-link
+   label (its language races on `window.browserLang`, so it flips both ways
+   between runs) and console errors that the live site produces too.
 
 ## What still depends on Tilda (decide before cancelling the Tilda plan)
 
@@ -59,9 +72,14 @@ crawl-report.json  page list, asset count, dead links found on the live site
   posts to Tilda. Same caveat; easiest fix is pointing those buttons at the
   /anketa form or a Telegram link.
 * Two harmless runtime calls still go to Tilda and fail gracefully if Tilda
-  disappears: the phone mask asks `geo.tildaapi.one` for the visitor's
-  country (falls back to the form's default country) and the cart asks
-  `store.tildaapi.one` for active discounts (logs an error, continues).
+  disappears: the phone mask asks `geo.tildaapi.one` for the visitor's country
+  (falls back to the form's default country) and the cart asks
+  `store.tildaapi.one` for active discounts (logs an error, continues). Both
+  are listed as accepted in `tools/verify_page.py`.
+* Tilda hostnames still appear as strings inside the library JS, but every one
+  is an unreachable path on this site: error fallbacks, and features no page
+  uses (file uploads, delivery services, saved payment fields). The audit
+  inventory is in `crawl-report.json`.
 * Yandex Metrika counter keeps working from any domain.
 
 ## Leftover template pages
