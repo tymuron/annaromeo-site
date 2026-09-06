@@ -1,0 +1,129 @@
+{
+  "origin": "https://annaromeo-design.onrender.com",
+  "pages": {
+    "/": "index.html",
+    "/page8023976.html": "page8023976.html",
+    "/strelna": "strelna/index.html",
+    "/poblenou137": "poblenou137/index.html",
+    "/grandapartment": "grandapartment/index.html",
+    "/andorra_chalet": "andorra_chalet/index.html",
+    "/pauclaris145": "pauclaris145/index.html",
+    "/loft_piter": "loft_piter/index.html",
+    "/loftspb": "loftspb/index.html",
+    "/about": "about/index.html",
+    "/page21808464.html": "page21808464.html",
+    "/page21808644.html": "page21808644.html",
+    "/spa_nyx": "spa_nyx/index.html",
+    "/autoservice_zergood": "autoservice_zergood/index.html",
+    "/l-bar": "l-bar/index.html",
+    "/sushi-restaurant": "sushi-restaurant/index.html",
+    "/mini-hotel_kyiv": "mini-hotel_kyiv/index.html",
+    "/dis_centro_de_estetica": "dis_centro_de_estetica/index.html",
+    "/lash_salon": "lash_salon/index.html",
+    "/villarosa_case": "villarosa_case/index.html",
+    "/classpaper": "classpaper/index.html",
+    "/page65586091.html": "page65586091.html",
+    "/uslugi_vastu": "uslugi_vastu/index.html",
+    "/podhod": "podhod/index.html",
+    "/mk-vastudesign": "mk-vastudesign/index.html",
+    "/uslugi/interview": "uslugi/interview/index.html",
+    "/prezamk": "prezamk/index.html",
+    "/main": "main/index.html",
+    "/offer": "offer/index.html",
+    "/anketa": "anketa/index.html",
+    "/success-anketa": "success-anketa/index.html",
+    "/main/tproduct/1151175336-420594891772-podbor-novoi-nedvizhimosti-po-vastu": "main/tproduct/1151175336-420594891772-podbor-novoi-nedvizhimosti-po-vastu/index.html",
+    "/main/tproduct/1151175336-676208897862-vastu-diagnostika": "main/tproduct/1151175336-676208897862-vastu-diagnostika/index.html",
+    "/main/tproduct/1151175336-387501560802-vastu-dizain-kontseptsiya-interera": "main/tproduct/1151175336-387501560802-vastu-dizain-kontseptsiya-interera/index.html",
+    "/main/tproduct/1151175336-991692931582-konsultatsiya-po-vastu-dizainu-dlya-diza": "main/tproduct/1151175336-991692931582-konsultatsiya-po-vastu-dizainu-dlya-diza/index.html",
+    "/main/tproduct/1151175336-966293073022-konsultatsiya-vastu-dlya-biznesa": "main/tproduct/1151175336-966293073022-konsultatsiya-vastu-dlya-biznesa/index.html",
+    "/error-page": "error-page/index.html",
+    "/podval": "podval/index.html",
+    "/fs": "fs/index.html",
+    "/page30009513.html": "page30009513.html",
+    "/page46705965.html": "page46705965.html",
+    "/page68596975.html": "page68596975.html",
+    "/page79481866.html": "page79481866.html"
+  },
+  "page_count": 43,
+  "asset_count": 1225,
+  "asset_mb": 283.4,
+  "dead_links": {
+    "/projects": [
+      "/page21808464.html"
+    ],
+    "/page8861076.html": [
+      "/page21808464.html"
+    ],
+    "/policy": [
+      "/mk-vastudesign"
+    ],
+    "/data": [
+      "/mk-vastudesign"
+    ],
+    "/uslugi/contacts": [
+      "/uslugi/interview"
+    ],
+    "/uslugi": [
+      "/uslugi/interview"
+    ],
+    "/uslugi/en": [
+      "/uslugi/interview"
+    ],
+    "/oferta": [
+      "/prezamk"
+    ]
+  },
+  "failed_assets": [],
+  "leftover_cdn_refs": {
+    "main/tproduct/1151175336-420594891772-podbor-novoi-nedvizhimosti-po-vastu/index.html": [
+      "static.tildacdn.one/tild6135-6639-4666-a139-326165333830/8L7A6838.jpeg",
+      "static.tildacdn.one\\/tild6135-6639-4666-a139-326165333830\\/8L7A6838.jpeg"
+    ],
+    "main/tproduct/1151175336-387501560802-vastu-dizain-kontseptsiya-interera/index.html": [
+      "static.tildacdn.one/tild3132-6630-4561-b462-373061306663/-_2_2_resized_1.jpg",
+      "static.tildacdn.one\\/tild3132-6630-4561-b462-373061306663\\/-_2_2_resized_1.jpg"
+    ],
+    "main/tproduct/1151175336-676208897862-vastu-diagnostika/index.html": [
+      "static.tildacdn.one/tild6331-3439-4639-b066-663233613039/-_2_3_resized_1.jpg",
+      "static.tildacdn.one\\/tild6331-3439-4639-b066-663233613039\\/-_2_3_resized_1.jpg"
+    ],
+    "main/tproduct/1151175336-991692931582-konsultatsiya-po-vastu-dizainu-dlya-diza/index.html": [
+      "static.tildacdn.one/tild3431-6539-4162-b934-636233656161/IMG_1633_1_1.jpg",
+      "static.tildacdn.one\\/tild3431-6539-4162-b934-636233656161\\/IMG_1633_1_1.jpg"
+    ],
+    "main/tproduct/1151175336-966293073022-konsultatsiya-vastu-dlya-biznesa/index.html": [
+      "static.tildacdn.one/tild3665-6262-4364-b261-313962346339/8L7A8510.jpeg",
+      "static.tildacdn.one\\/tild3665-6262-4364-b261-313962346339\\/8L7A8510.jpeg"
+    ],
+    "assets/static/js/tilda-upwidget-1.1.min.js": [
+      "upwidget.tildacdn.com/upload/",
+      "upwidget.tildacdn.com/upload/?get_mime="
+    ],
+    "assets/static/js/tilda-zero-forms-1.0.min.js": [
+      "forms.tildacdn.com/procces/"
+    ],
+    "assets/static/js/tilda-catalog-1.1.min.js": [
+      ".tildacdn.com"
+    ],
+    "assets/static/js/tilda-forms-1.0.min.js": [
+      "forms.tildacdn.com",
+      "forms2.tildacdn.com"
+    ],
+    "assets/static/js/tilda-scripts-3.0.min.js": [
+      "static.tildacdn.com"
+    ],
+    "assets/static/js/tilda-cart-1.1.min.js": [
+      "delivery.tildacdn.com",
+      "forms.tildacdn.com/api/v1/getlostbasket/",
+      "static3.tildacdn.com"
+    ],
+    "assets/static/js/tilda-stat-1.0.min.js": [
+      "ws.tildacdn.com/project"
+    ],
+    "assets/static/js/tilda-lazyload-1.0.min.js": [
+      ".tildacdn.com",
+      "static3.tildacdn.com/"
+    ]
+  }
+}

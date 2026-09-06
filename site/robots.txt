@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /error-page
+Disallow: /podval
+Disallow: /fs
+Disallow: /page30009513.html
+Disallow: /page46705965.html
+Disallow: /page68596975.html
+Disallow: /page79481866.html
+Disallow: /404.html
+
+Sitemap: https://annaromeo-design.onrender.com/sitemap.xml

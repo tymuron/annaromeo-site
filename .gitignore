@@ -1,0 +1,5 @@
+.DS_Store
+crawl.log
+tools/__pycache__/
+tools/verify-out/
+check.json
