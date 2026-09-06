@@ -124,9 +124,27 @@ come back.
 
 ## Deploy
 
-Render Blueprint from this repo (`render.yaml`, static site, publish path
-`site`). After a custom domain is attached, regenerate canonical/og:url and
-sitemap for it:
+Live at **https://annaromeo-design.onrender.com** — Render static site
+`annaromeo-design` (service `srv-daepvs0n74is73evrmn0`), auto-deploying from
+`main` of this repo. `render.yaml` holds the same settings for anyone
+recreating it as a Blueprint. Verified after deploy: all 1318 files serve,
+`404.html` is served for unmatched paths with a real 404 status, clean URLs
+work with and without a trailing slash, and asset caching is a year.
+
+**Check every deploy.** Render's upload silently dropped seven files on the
+first deploy here, including `404.html` and `tilda-animation-2.0.min.css`,
+which every page loads. The build log still said the site was live and the
+dashboard showed nothing wrong. So after each deploy run:
+
+```
+python3 tools/check_deploy.py https://annaromeo-design.onrender.com
+```
+
+If it reports missing files, redeploy with the build cache cleared. That fixed
+it here, and the second deploy served all 1318 files.
+
+After a custom domain is attached, regenerate canonical, og:url, og:image and
+the sitemap for it, then push:
 
 ```
 python3 tools/set_origin.py site https://<new-domain>
