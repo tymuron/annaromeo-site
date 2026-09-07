@@ -19,8 +19,14 @@ Only the assets these pages actually use are copied, so the result is about
 copied whole (they are small) because several are fetched lazily by name at
 runtime and would not be found by scanning the HTML.
 
+The flagship course is a separate project (~/vastu-course-site). With
+--course it is folded in at /course: its asset paths are all relative, so the
+files drop straight in with no collision, and only its metadata and the links
+to the dead annaromeo.design domain are rewritten.
+
 Usage:
-  python3 tools/build_vastu.py <out_dir> --origin https://annaromeovastu.com
+  python3 tools/build_vastu.py <out_dir> --origin https://annaromeovastu.com \
+      [--course ~/vastu-course-site]
 """
 import html
 import os
@@ -115,6 +121,11 @@ def main():
         return doc
 
     def set_origin(doc, path):
+        if path is None:
+            # a 404 page should not canonicalise anywhere, least of all at the
+            # other site it was mirrored from
+            doc = re.sub(r'<link rel="canonical" href="[^"]*">\s*', "", doc)
+            doc = re.sub(r'(<meta property="og:url" content=")[^"]*(")', r"\g<1>" + origin + r"\g<2>", doc)
         if path is not None:
             canon = origin + ("" if path == "/" else path)
             doc = re.sub(r'(<link rel="canonical" href=")[^"]*(")', r"\g<1>" + canon + r"\g<2>", doc)
@@ -175,6 +186,33 @@ def main():
         shutil.copy2(s, t)
         total += os.path.getsize(t)
         copied += 1
+
+    # the flagship course, served at /course
+    course_src = arg("--course")
+    if course_src:
+        course_src = os.path.expanduser(course_src)
+        cdest = os.path.join(site_out, "course")
+        os.makedirs(cdest, exist_ok=True)
+        shutil.copytree(os.path.join(course_src, "assets"), os.path.join(cdest, "assets"))
+        cdoc = open(os.path.join(course_src, "index.html"), encoding="utf-8").read()
+        curl = origin + "/course"
+        # its own domain metadata -> this domain
+        cdoc = re.sub(r'(<meta property="og:url" content=")[^"]*(")', r"\g<1>" + curl + r"\g<2>", cdoc)
+        cdoc = re.sub(r'(<link rel="canonical" href=")[^"]*(")', r"\g<1>" + curl + r"\g<2>", cdoc)
+        cdoc = cdoc.replace("https://annaromeo-vastu-course.onrender.com/assets", curl + "/assets")
+        cdoc = re.sub(r'(<meta property="og:image" content=")https?://[^"]*?/assets',
+                      r"\g<1>" + curl + "/assets", cdoc)
+        if '<link rel="canonical"' not in cdoc:
+            cdoc = cdoc.replace("<title>", f'<link rel="canonical" href="{curl}">\n<title>', 1)
+        # annaromeo.design expired; its Vastu content is this site now
+        cdoc = cdoc.replace('href="https://annaromeo.design/main#oferta"', f'href="{origin}/#oferta"')
+        cdoc = cdoc.replace('href="https://annaromeo.design"', f'href="{origin}"')
+        cdoc = cdoc.replace(">annaromeo.design<", ">annaromeovastu.com<")
+        open(os.path.join(cdest, "index.html"), "w", encoding="utf-8").write(cdoc)
+        n = sum(1 for d, _, fs in os.walk(cdest) for _ in fs)
+        mb = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(cdest) for f in fs) / 1e6
+        written.append(("course/index.html", "/course"))
+        print(f"course  : /course  ({n} files, {mb:.0f} MB) from {course_src}")
 
     # the preview card itself
     og_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "og-preview.jpg")
