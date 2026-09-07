@@ -196,6 +196,18 @@ def main():
         shutil.copytree(os.path.join(course_src, "assets"), os.path.join(cdest, "assets"))
         cdoc = open(os.path.join(course_src, "index.html"), encoding="utf-8").read()
         curl = origin + "/course"
+        # Every asset path in the course is relative ("assets/..."), which is
+        # correct at its own site root but resolves against "/" when the page
+        # is served at /course with no trailing slash - it would ask this
+        # site's /assets and get 404s. Make them absolute instead of relying
+        # on a trailing slash the visitor may not type.
+        n_before = len(re.findall(r'(?:="|url\(\s*[\'"]?)assets/', cdoc))
+        cdoc = cdoc.replace('="assets/', '="/course/assets/')
+        cdoc = re.sub(r"url\(\s*'assets/", "url('/course/assets/", cdoc)
+        cdoc = re.sub(r'url\(\s*"assets/', 'url("/course/assets/', cdoc)
+        cdoc = re.sub(r"url\(\s*assets/", "url(/course/assets/", cdoc)
+        left = len(re.findall(r'(?:="|url\(\s*[\'"]?)assets/', cdoc))
+        print(f"course  : rewrote {n_before - left} relative asset paths to /course/assets ({left} left)")
         # its own domain metadata -> this domain
         cdoc = re.sub(r'(<meta property="og:url" content=")[^"]*(")', r"\g<1>" + curl + r"\g<2>", cdoc)
         cdoc = re.sub(r'(<link rel="canonical" href=")[^"]*(")', r"\g<1>" + curl + r"\g<2>", cdoc)
