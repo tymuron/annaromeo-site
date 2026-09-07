@@ -29,6 +29,14 @@ import shutil
 import sys
 
 SRC = "site"
+
+# The Tilda page shipped no og:image and an empty og:description, so a shared
+# link showed a bare URL. Both are filled in here. The description is Anna's
+# own wording from the page, not invented copy.
+OG_IMAGE = "/assets/og-preview.jpg"
+OG_DESCRIPTION = ("Создаю интерьеры, которые наполняют энергией. "
+                  "Профессиональный дизайнер-архитектор с 15-летним опытом, "
+                  "проекты в Лондоне, Дубае и по всей Европе.")
 # whole directories to copy: small, and their contents are loaded by name at
 # runtime (lazy cart/catalog/forms helpers, fonts, per-page css+js).
 BULK_DIRS = ["assets/static/css", "assets/static/js", "assets/static/lib", "assets/static/ws"]
@@ -82,6 +90,30 @@ def main():
         doc = re.sub(r'(?<![\w/])/main(?=["\'#?])', "/", doc)
         return doc
 
+    def add_link_preview(doc, path):
+        """Give the home page a preview image and description; make sure every
+        page advertises a large summary card."""
+        img = origin + OG_IMAGE
+        if path == "/":
+            if '<meta property="og:image"' not in doc:
+                doc = doc.replace('<meta property="og:type"',
+                                  f'<meta property="og:image" content="{img}" />\n'
+                                  '<meta property="og:image:width" content="1200" />\n'
+                                  '<meta property="og:image:height" content="630" />\n'
+                                  '<meta property="og:type"', 1)
+            doc = re.sub(r'<meta property="og:description" content="\s*"',
+                         f'<meta property="og:description" content="{OG_DESCRIPTION}"', doc)
+            if '<meta name="description"' not in doc:
+                doc = doc.replace("<title>", f'<meta name="description" content="{OG_DESCRIPTION}" />\n<title>', 1)
+            else:
+                doc = re.sub(r'<meta name="description" content="\s*"',
+                             f'<meta name="description" content="{OG_DESCRIPTION}"', doc)
+        if "twitter:card" not in doc:
+            doc = doc.replace('<meta property="og:type"',
+                              '<meta name="twitter:card" content="summary_large_image" />\n'
+                              '<meta property="og:type"', 1)
+        return doc
+
     def set_origin(doc, path):
         if path is not None:
             canon = origin + ("" if path == "/" else path)
@@ -109,7 +141,7 @@ def main():
     written = []
     for src, rel, path in pages:
         doc = open(src, encoding="utf-8").read()
-        doc = set_origin(rewrite_links(doc), path)
+        doc = set_origin(add_link_preview(rewrite_links(doc), path), path)
         note_assets(doc)
         dest = os.path.join(site_out, rel)
         os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
@@ -143,6 +175,14 @@ def main():
         shutil.copy2(s, t)
         total += os.path.getsize(t)
         copied += 1
+
+    # the preview card itself
+    og_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "og-preview.jpg")
+    if os.path.isfile(og_src):
+        shutil.copy2(og_src, os.path.join(site_out, OG_IMAGE.lstrip("/")))
+        print(f"link preview: {OG_IMAGE} ({os.path.getsize(og_src)/1024:.0f} KB)")
+    else:
+        print(f"WARNING: {og_src} missing, pages will reference an absent og:image")
 
     # robots + sitemap
     sitemap = ['<?xml version="1.0" encoding="UTF-8"?>',
