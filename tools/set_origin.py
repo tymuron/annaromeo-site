@@ -12,6 +12,12 @@ import re
 import sys
 
 
+# /main and its five service pages live on their own domain now, so their
+# canonical must keep pointing there rather than being reset to this origin.
+VASTU_CANONICAL = "https://annaromeovastu.com"
+VASTU_PATHS = ("main/index.html", "main/tproduct/")
+
+
 def main():
     root, origin = sys.argv[1], sys.argv[2].rstrip("/")
     n = 0
@@ -27,6 +33,8 @@ def main():
                 path = "/" + rel[: -len("/index.html")]
             else:
                 path = "/" + rel
+            if any(rel.startswith(v) or rel == v for v in VASTU_PATHS):
+                continue
             canon = origin + path
             doc = open(p, encoding="utf-8").read()
             new = re.sub(r'(<link rel="canonical" href=")[^"]*(")', r"\g<1>" + canon + r"\g<2>", doc)
