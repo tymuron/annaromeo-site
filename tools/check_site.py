@@ -27,7 +27,10 @@ EXT_SKIP = re.compile(r"^(https?:)?//|^mailto:|^tel:|^javascript:|^#|^data:|^blo
 
 
 def local_exists(root, ref, page_dir):
+    # unescape first, then strip quotes: a CSS url() inside an HTML attribute
+    # arrives as url(&quot;/assets/...&quot;)
     ref = html.unescape(ref).strip().strip("\"'").split("#")[0].split("?")[0]
+    ref = ref.strip().strip("\"'")
     if not ref or ref.isdigit():
         return True
     ref = urllib.parse.unquote(ref)
