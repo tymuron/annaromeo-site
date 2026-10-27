@@ -206,14 +206,11 @@ def main():
         # it is the course page for buyers in Ukraine).
         if os.path.isfile(os.path.join(course_src, "ua", "index.html")):
             course_pages.append("ua/index.html")
-        # ...and the masterclass copy's Ukrainian version (mk/ua/, noindex too).
-        if os.path.isfile(os.path.join(course_src, "mk", "ua", "index.html")):
-            course_pages.append("mk/ua/index.html")
         course_host = "https://annaromeo-vastu-course.onrender.com"
         for page in course_pages:
             page_url = curl + ("/" + os.path.dirname(page) if page != "index.html" else "")
             cdoc = open(os.path.join(course_src, page), encoding="utf-8").read()
-            cdoc = re.sub(r"(?:\.\./)+assets/", "assets/", cdoc)
+            cdoc = cdoc.replace("../assets/", "assets/")
             # Every asset path in the course is relative ("assets/..."), which is
             # correct at its own site root but resolves against "/" when the page
             # is served at /course with no trailing slash - it would ask this
@@ -234,9 +231,7 @@ def main():
             cdoc = re.sub(r'(<meta property="og:url" content=")[^"]*(")', r"\g<1>" + page_url + r"\g<2>", cdoc)
             cdoc = re.sub(r'(<link rel="canonical" href=")[^"]*(")', r"\g<1>" + page_url + r"\g<2>", cdoc)
             # language versions (hreflang + the RU/UA switch) -> this domain
-            for path in ("mk/ua", "mk", "ua"):  # the longer path first
-                cdoc = cdoc.replace(f'href="{course_host}/{path}/"', f'href="{curl}/{path}"')
-            cdoc = cdoc.replace(f'href="{course_host}/"', f'href="{curl}"')
+            cdoc = cdoc.replace(f'href="{course_host}/ua/"', f'href="{curl}/ua"').replace(f'href="{course_host}/"', f'href="{curl}"')
             cdoc = cdoc.replace("https://annaromeo-vastu-course.onrender.com/assets", curl + "/assets")
             cdoc = re.sub(r'(<meta property="og:image" content=")https?://[^"]*?/assets',
                           r"\g<1>" + curl + "/assets", cdoc)
@@ -249,7 +244,7 @@ def main():
             os.makedirs(os.path.dirname(os.path.join(cdest, page)), exist_ok=True)
             open(os.path.join(cdest, page), "w", encoding="utf-8").write(cdoc)
             if page != "index.html":
-                print(f"course  : /course/{os.path.dirname(page)} ({'hidden copy' if page.startswith('mk/') else 'Ukrainian version'})")
+                print(f"course  : /course/{os.path.dirname(page)} ({'Ukrainian version' if page.startswith('ua/') else 'hidden copy'})")
         n = sum(1 for d, _, fs in os.walk(cdest) for _ in fs)
         mb = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(cdest) for f in fs) / 1e6
         written.append(("course/index.html", "/course"))  # the mk copy is noindex: not listed
