@@ -202,7 +202,13 @@ def main():
         course_pages = ["index.html"]
         if os.path.isfile(os.path.join(course_src, "mk", "index.html")):
             course_pages.append("mk/index.html")
+        # ...and its Ukrainian version (ua/, tools/make_ua_page.py; indexed,
+        # it is the course page for buyers in Ukraine).
+        if os.path.isfile(os.path.join(course_src, "ua", "index.html")):
+            course_pages.append("ua/index.html")
+        course_host = "https://annaromeo-vastu-course.onrender.com"
         for page in course_pages:
+            page_url = curl + ("/" + os.path.dirname(page) if page != "index.html" else "")
             cdoc = open(os.path.join(course_src, page), encoding="utf-8").read()
             cdoc = cdoc.replace("../assets/", "assets/")
             # Every asset path in the course is relative ("assets/..."), which is
@@ -222,13 +228,15 @@ def main():
             if left:
                 raise SystemExit(f"course still has {left} relative asset paths; they would 404 at /course")
             # its own domain metadata -> this domain
-            cdoc = re.sub(r'(<meta property="og:url" content=")[^"]*(")', r"\g<1>" + curl + r"\g<2>", cdoc)
-            cdoc = re.sub(r'(<link rel="canonical" href=")[^"]*(")', r"\g<1>" + curl + r"\g<2>", cdoc)
+            cdoc = re.sub(r'(<meta property="og:url" content=")[^"]*(")', r"\g<1>" + page_url + r"\g<2>", cdoc)
+            cdoc = re.sub(r'(<link rel="canonical" href=")[^"]*(")', r"\g<1>" + page_url + r"\g<2>", cdoc)
+            # language versions (hreflang + the RU/UA switch) -> this domain
+            cdoc = cdoc.replace(f'href="{course_host}/ua/"', f'href="{curl}/ua"').replace(f'href="{course_host}/"', f'href="{curl}"')
             cdoc = cdoc.replace("https://annaromeo-vastu-course.onrender.com/assets", curl + "/assets")
             cdoc = re.sub(r'(<meta property="og:image" content=")https?://[^"]*?/assets',
                           r"\g<1>" + curl + "/assets", cdoc)
             if '<link rel="canonical"' not in cdoc:
-                cdoc = cdoc.replace("<title>", f'<link rel="canonical" href="{curl}">\n<title>', 1)
+                cdoc = cdoc.replace("<title>", f'<link rel="canonical" href="{page_url}">\n<title>', 1)
             # annaromeo.design expired; its Vastu content is this site now
             cdoc = cdoc.replace('href="https://annaromeo.design/main#oferta"', f'href="{origin}/#oferta"')
             cdoc = cdoc.replace('href="https://annaromeo.design"', f'href="{origin}"')
@@ -236,10 +244,12 @@ def main():
             os.makedirs(os.path.dirname(os.path.join(cdest, page)), exist_ok=True)
             open(os.path.join(cdest, page), "w", encoding="utf-8").write(cdoc)
             if page != "index.html":
-                print(f"course  : /course/{os.path.dirname(page)} (hidden copy)")
+                print(f"course  : /course/{os.path.dirname(page)} ({'Ukrainian version' if page.startswith('ua/') else 'hidden copy'})")
         n = sum(1 for d, _, fs in os.walk(cdest) for _ in fs)
         mb = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(cdest) for f in fs) / 1e6
         written.append(("course/index.html", "/course"))  # the mk copy is noindex: not listed
+        if "ua/index.html" in course_pages:
+            written.append(("course/ua/index.html", "/course/ua"))
         print(f"course  : /course  ({n} files, {mb:.0f} MB) from {course_src}")
 
     # the preview card itself
