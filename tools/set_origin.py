@@ -45,11 +45,14 @@ def main():
             if new != doc:
                 open(p, "w", encoding="utf-8").write(new)
                 n += 1
-    for fn in ("robots.txt", "sitemap.xml"):
+    # only the Sitemap: line and the <loc> values; the urlset's xmlns
+    # (http://www.sitemaps.org/...) is a namespace, not an origin to rewrite
+    for fn, pat in (("robots.txt", r"(Sitemap:\s*)https?://[a-zA-Z0-9.-]+"),
+                    ("sitemap.xml", r"(<loc>)https?://[a-zA-Z0-9.-]+")):
         p = os.path.join(root, fn)
         if os.path.exists(p):
             txt = open(p, encoding="utf-8").read()
-            txt = re.sub(r"https?://[a-zA-Z0-9.-]+(?=/sitemap\.xml|/|<)", origin, txt)
+            txt = re.sub(pat, lambda m: m.group(1) + origin, txt)
             open(p, "w", encoding="utf-8").write(txt)
     print(f"origin set to {origin} on {n} pages + robots.txt/sitemap.xml")
 
